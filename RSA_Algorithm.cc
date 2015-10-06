@@ -1,4 +1,5 @@
 // RSA Assignment for ECE4122/6122 Fall 2015
+//Yushan Cai
 
 #include <iostream>
 #include <fcntl.h>
@@ -8,8 +9,6 @@
 #include "RSA_Algorithm.h"
 
 using namespace std;
-
-// Implement the RSA_Algorithm methods here
 
 // Constructor
 RSA_Algorithm::RSA_Algorithm()
@@ -29,8 +28,65 @@ RSA_Algorithm::RSA_Algorithm()
 // No need to init n, d, or e.
 }
 
-// Fill in the remainder of the RSA_Algorithm methods
+// Generate key
+void RSA_Algorithm::GenerateRandomKeyPair(size_t sz)
+{
+  //Declare p and q
+  mpz_class p, q;
 
+  //Make sure both numbers are random prime numbers.
+  while(!mpz_probab_prime_p(p.get_mpz_t(), 100))
+  { 
+    p = rng.get_z_bits(sz); //returns random value of size sz
+  }
+  while(!mpz_probab_prime_p(q.get_mpz_t(), 100))
+  { 
+    q = rng.get_z_bits(sz);
+  }
+
+  //Calculate n
+  n = p * q;
+
+  //Calculate phi
+  mpz_class phi = (p-1) * (q-1);
+
+  //Declare class for greatest common divisor
+  mpz_class gcd;
+
+  //Generate a new random new d and update gcd while
+  //d is not less than phi or gcd is not equal to 1
+  do
+  {
+    d = rng.get_z_bits(sz * 2);
+    mpz_gcd(gcd.get_mpz_t(), d.get_mpz_t(), phi.get_mpz_t());
+  }
+  while(d >= phi || gcd != 1);
+
+  //Compute the inverse of d modulo phi as e
+  mpz_invert(e.get_mpz_t(), d.get_mpz_t(), phi.get_mpz_t());
+}
+
+// Encrypt plaintext message M with (public) key pair n/e
+mpz_class RSA_Algorithm::Encrypt(mpz_class M)
+{
+  //Declare ciphertext C
+  mpz_class C;
+
+  //Compute C = M^e mod n
+  mpz_powm(C.get_mpz_t(), M.get_mpz_t(), e.get_mpz_t(), n.get_mpz_t());
+  return C;
+}
+
+// Decrypt ciphertext message C with (private) key pair n/d
+mpz_class RSA_Algorithm::Decrypt(mpz_class C)
+{
+  //Declare decrypted plaintext message M
+  mpz_class M;
+
+  //Compute M = C^d mod n
+  mpz_powm(M.get_mpz_t(), C.get_mpz_t(), d.get_mpz_t(), n.get_mpz_t());
+  return M;
+}
 
 void RSA_Algorithm::PrintND()
 { // Do not change this, right format for the grading script
